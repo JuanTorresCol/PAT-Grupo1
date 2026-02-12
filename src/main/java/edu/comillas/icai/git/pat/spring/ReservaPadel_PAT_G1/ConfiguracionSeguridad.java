@@ -20,12 +20,14 @@ import org.springframework.security.web.SecurityFilterChain;
 public class ConfiguracionSeguridad {
     @Bean
     public SecurityFilterChain configuracion(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated())
-                .formLogin(Customizer.withDefaults())
-                .httpBasic(Customizer.withDefaults())
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().authenticated())
+                .httpBasic(Customizer.withDefaults());
         return http.build();
     }
+
 
     @Bean public UserDetailsService usuarios() {
         UserDetails user = User.withDefaultPasswordEncoder()
