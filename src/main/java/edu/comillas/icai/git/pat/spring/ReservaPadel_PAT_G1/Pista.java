@@ -19,5 +19,9 @@ public record Pista(
         Date fechaAlta
 )
 {
-
+    public Pista {
+        if (fechaAlta == null) {
+            fechaAlta = new Date();
+        }
+    }
 }
