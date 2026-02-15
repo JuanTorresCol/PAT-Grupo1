@@ -24,6 +24,7 @@ public class ReservaController {
     private static final LocalTime CIERRE = LocalTime.of(22, 0);
     private static final Logger log = LoggerFactory.getLogger(ReservaController.class);
 
+    //seria el record disponibilidad
     private record SlotInfo(LocalDate date, int slotStart, int slotEnd) {}
 
     private final ServicioPistas servicio;
@@ -49,8 +50,8 @@ public class ReservaController {
 
         log.debug("Comprobando existencia de la pista");
         //hay que comprobar que la pista exista y que esté activa (404 y 400)
-        Pista pista = comprobarPistaExiste(req.courtId());
         log.warn("Intento de reserva sobre pista inexistente.");
+        Pista pista = comprobarPistaExiste(req.courtId());
         if (Boolean.FALSE.equals(pista.activa())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La pista no está activa");
         }
@@ -62,10 +63,9 @@ public class ReservaController {
         int slotEnd = s.slotEnd();
 
 
-
+        log.warn("Intento de reserva con solapamiento.");
         //409 comprobación de slots libres
         disponibilidadSlots(req.courtId(), date, slotStart, slotEnd);
-        log.warn("Intento de reserva con solapamiento.");
         //marcar slots como ocupados
         setSlots(req.courtId(), date, slotStart, slotEnd, true);
 

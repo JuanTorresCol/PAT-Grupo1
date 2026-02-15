@@ -129,10 +129,10 @@ public class ControladorPistas {
             if (!servicio.pistas.containsKey(courtId)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existen pistas con ese ID");
             }
-            respuesta.put(courtId, obtenerDisponibilidadDia(courtId, fecha));
+            respuesta.put(courtId, servicio.obtenerDisponibilidadDia(courtId, fecha));
         } else {
             for (String id : servicio.pistas.keySet()) {
-                respuesta.put(id, obtenerDisponibilidadDia(id, fecha));
+                respuesta.put(id, servicio.obtenerDisponibilidadDia(id, fecha));
             }
         }
         return respuesta;
@@ -147,15 +147,10 @@ public class ControladorPistas {
         if (fecha.isBefore(LocalDate.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No puedes buscar reservas de días pasados");
         }
-        return obtenerDisponibilidadDia(courtId, fecha);
+        return servicio.obtenerDisponibilidadDia(courtId, fecha);
     }
 
-    // crea un nuevo día si no existe
-    public ArrayList<Boolean> obtenerDisponibilidadDia(String courtId, LocalDate fecha) {
-        Map<LocalDate, ArrayList<Boolean>> mapaDias = servicio.disponibilidades.get(courtId);
-        mapaDias.putIfAbsent(fecha, new ArrayList<>(Collections.nCopies(28, false)));
-        return mapaDias.get(fecha);
-    }
+
 
 
 }
