@@ -23,10 +23,10 @@ public class ReservaService {
     public static final LocalTime CIERRE = LocalTime.of(22, 0);
     //seria el record disponibilidad
     public record SlotInfo(LocalDate date, int slotStart, int slotEnd) {}
-    private final PistaService serviciopist;
+    private final PistaService pistaser;
     //almacenamiento de las reservas
     private final Map<String, Reserva> reservas = new ConcurrentHashMap<>();
-    public ReservaService(PistaService servicio) {this.serviciopist = servicio;}
+    public ReservaService(PistaService servicio) {this.pistaser = servicio;}
     public Map<String, Reserva> reservas() { return reservas; }
 
     //metodos usados en el controller
@@ -40,7 +40,7 @@ public class ReservaService {
     }
 
     public Pista comprobarPistaExiste(String courtId) {
-        Pista pista = serviciopist.getPista(courtId);
+        Pista pista = pistaser.getPista(courtId);
         if (pista == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La pista no existe");
         }
@@ -86,7 +86,7 @@ public class ReservaService {
     //para franjas horarias (ver si estan o no disponibles)
     public void disponibilidadSlots(String courtId, LocalDate date, int slotStart, int slotEnd) {
         comprobarPistaExiste(courtId);
-        ArrayList<Boolean> dia = serviciopist.obtenerDisponibilidadDia(courtId, date);
+        ArrayList<Boolean> dia = pistaser.obtenerDisponibilidadDia(courtId, date);
         for (int i = slotStart; i < slotEnd; i++) {
             if (dia.get(i)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
@@ -95,7 +95,7 @@ public class ReservaService {
     }
     public void setSlots(String courtId, LocalDate date, int slotStart, int slotEnd, boolean valor) {
         comprobarPistaExiste(courtId);
-        ArrayList<Boolean> dia = serviciopist.obtenerDisponibilidadDia(courtId, date);
+        ArrayList<Boolean> dia = pistaser.obtenerDisponibilidadDia(courtId, date);
         for (int i = slotStart; i < slotEnd; i++) {
             dia.set(i, valor);
         }

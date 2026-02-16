@@ -185,9 +185,7 @@ public class ReservaController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se han introducido cambios");
         }
         Reserva actual = reservaser.obtenerReserva(reservationId);
-        log.debug("Reserva actual {} -> usuario={}, pista={}, fecha={}, slots=?..?, estado={}",
-                reservationId, actual.username(), actual.courtId(),
-                actual.date(), actual.estado());
+        log.debug("Reserva actual {} -> usuario={}, pista={}, fecha={}, slots=?..?, estado={}", reservationId, actual.username(), actual.courtId(), actual.date(), actual.estado());
 
         //409 reserva ya cancelada o reserva pasada (no debería dejar modificarlas)
         if (actual.estado() == ReservaStatus.CANCELADA) {
