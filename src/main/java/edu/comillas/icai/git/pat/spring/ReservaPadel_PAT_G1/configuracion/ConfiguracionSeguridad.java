@@ -1,4 +1,4 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.configuracion;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
