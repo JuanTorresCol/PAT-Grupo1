@@ -25,7 +25,7 @@ public class UserController {
     }
 
     // GET /pistaPadel/users/{userId}
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{userId}")
     public User getUserById(@PathVariable Long userId) {
         try {
@@ -43,12 +43,13 @@ public class UserController {
             return userService.createUser(user);
         } catch (RuntimeException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
-            //409 conflicto, email suplicado
+            //409 conflicto, email duplicado
         }
     }
 
+
     //PATCH /pistaPadel/users/{userId}
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{userId}")
     public User updateUser(@PathVariable Long userId,
                            @RequestBody User user) {
@@ -61,7 +62,7 @@ public class UserController {
     }
 
     //DELETE /pistaPadel/users/{userId}
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long userId) {

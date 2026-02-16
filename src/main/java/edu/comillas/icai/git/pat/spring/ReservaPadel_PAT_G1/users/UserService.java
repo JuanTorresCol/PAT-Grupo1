@@ -41,8 +41,8 @@ public class UserService {
             //siempre que se de logger.error hay que hacer exception
 
         }
-
-        return userRepository.save(user);
+        else{
+        return userRepository.save(user); }
     }
 
     //actualizar usuario

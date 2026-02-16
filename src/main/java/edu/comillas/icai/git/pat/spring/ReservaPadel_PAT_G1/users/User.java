@@ -1,6 +1,7 @@
 package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.users;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -30,7 +31,7 @@ public class User {
     private String email;
 
     @NotBlank
-    @JsonIgnore // No devolver password en respuestas JSON
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) // No devolver password en respuestas JSON
     @Column(nullable = false)
     private String password;
 
