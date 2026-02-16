@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
@@ -354,5 +355,33 @@ public class ReservaController {
         return !fin.isAfter(LocalTime.now()); // fin <= ahora
     }
 
+    // Ver todas las reservas según determinados filtros
+    @GetMapping("/pistaPadel/admin/reservations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Reserva> obtenerReservas( @RequestParam(required = false) String username,
+                                          @RequestParam(required = false) String courtId,
+                                          @RequestParam(required = false) LocalDate date) {
+        List<Reserva> reservas_solicitadas = new ArrayList<>();
+        for (Reserva r : reservas.values()) {
+            boolean filtrada = true;
 
+            // si no hay filtro se mantiene
+            // en caso de tener filtro si no se cumple la igualdad no se muestra en el return
+            if (username != null && !username.equals(r.username())) {
+                filtrada = false;
+            }
+            if (courtId != null && !courtId.equals(r.courtId())) {
+                filtrada = false;
+            }
+            if (date != null && !date.equals(r.date())) {
+                filtrada = false;
+            }
+
+            if (filtrada) {
+                reservas_solicitadas.add(r);
+            }
+        }
+
+        return reservas_solicitadas;
+    }
 }
