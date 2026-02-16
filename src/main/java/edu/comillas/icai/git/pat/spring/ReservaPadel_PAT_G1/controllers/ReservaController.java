@@ -1,7 +1,7 @@
 package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.*;
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.servicios.ReservaService;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services.ReservaService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

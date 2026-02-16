@@ -2,7 +2,7 @@ package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.CourtUpdate;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Pista;
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.servicios.PistaService;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services.PistaService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.servicios;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services;
 
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Pista;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Reserva;
