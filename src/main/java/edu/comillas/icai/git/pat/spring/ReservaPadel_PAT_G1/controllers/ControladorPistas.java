@@ -1,5 +1,8 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.CourtUpdate;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Pista;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services.PistaService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,18 +15,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 public class ControladorPistas {
 
-    private final ServicioPistas servicio;
+    private final PistaService servicio;
 
     public static final Logger log = LoggerFactory.getLogger(ControladorPistas.class);
 
-    @Autowired public ControladorPistas(ServicioPistas servicio) { this.servicio = servicio; }
+    @Autowired public ControladorPistas(PistaService servicio) { this.servicio = servicio; }
 
     @PostMapping("/pistaPadel/courts")
     @ResponseStatus(HttpStatus.CREATED)
@@ -149,7 +151,6 @@ public class ControladorPistas {
         }
         return servicio.obtenerDisponibilidadDia(courtId, fecha);
     }
-
 
 
 

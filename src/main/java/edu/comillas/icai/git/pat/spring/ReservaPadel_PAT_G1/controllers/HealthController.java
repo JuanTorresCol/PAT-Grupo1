@@ -1,4 +1,4 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
