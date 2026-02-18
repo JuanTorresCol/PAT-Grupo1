@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
-public class ControladorPistas {
+public class  ControladorPistas {
 
     private final PistaService servicio;
 

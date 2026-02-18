@@ -1,6 +1,5 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.users;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;

@@ -1,37 +1,5 @@
 package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
-/*
-@RestController
-@RequestMapping("/pistaPadel/auth")
-
-public class AuthController{
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody Usuario usuario){
-        // LLAMADA A X PARA GUARDAR USUARIO
-        return ResponseEntity.status(HttpStatus.CREATED).body("Usuario registrado con exito");
-    }
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest){
-        // LOGICA VALIDACION USUARIO
-        return ResponseEntity.ok("Token Simulado");
-    }
-    @PostMapping("/logout")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(){
-        //LOGICA INVALIDACION
-        System.out.println("Usuario ha solicitado cierre de sesión");
-    }
-    @GetMapping("/me")
-    public ResponseEntity<Usuario> me(){
-        return ResponseEntity.ok(new Usuario());
-    }
-}
-
-//record para hacer el login
-record LoginRequest(String email, String password){}
- */
-
-
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.LoginRequest;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Usuario;
 import jakarta.validation.Valid;
@@ -80,7 +48,10 @@ public class AuthController{
     @ResponseStatus(HttpStatus.NO_CONTENT) //204
     public void logout(){
         SecurityContextHolder.clearContext();
+        this.usuarioAutenticado = null;
     }
+
+
     @GetMapping("/me")
     public Usuario me(){
         if (this.usuarioAutenticado != null){

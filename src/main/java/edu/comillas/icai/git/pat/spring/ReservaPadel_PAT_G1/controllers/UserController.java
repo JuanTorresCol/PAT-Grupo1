@@ -1,5 +1,7 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.users;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.User;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
