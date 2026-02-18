@@ -89,4 +89,3 @@ public class AuthController{
     }
 }
 
-record LoginRequest(String email, String password) {}
