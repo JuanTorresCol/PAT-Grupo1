@@ -8,6 +8,23 @@ Actualmente:
 - Todos los endpoints están implementados.
 - Las reglas de negocio están operativas.
 - Se gestionan correctamente los códigos HTTP esperados.
+
+### Endpoints implementados
+Se han implementado todos los endpoints definidos en la guía:
+- Autenticación (/auth)
+- Gestión de usuarios (/users)
+- Gestión de pistas (/courts)
+- Disponibilidad (/availability)
+- Reservas (/reservations)
+- Administración (/admin/reservations)
+- Healthcheck (/health)
+Todos gestionan correctamente los códigos HTTP esperados (200, 201, 204, 400, 401, 403, 404, 409).
+
+### Notas adicionales 
+Actualmente existen dos clases para usuario:
+- Usuario: utilizada en esta fase sin base de datos.
+- User: preparada para la futura integración con persistencia y seguridad.
+
 ### Arquitectura
 - [src/main/java/edu/comillas/icai/git/pat/spring/ReservaPadel_PAT_G1/](./src/main/java/edu/comillas/icai/git/pat/spring/ReservaPadel_PAT_G1) – Código fuente de la aplicación Spring Boot.
     - configuration → Clases de configuración de la aplicación.
@@ -25,21 +42,5 @@ Actualmente:
 
 - [README.md](./README.md) – Documento descriptivo de la primera entrega.
 
-
-### Endpoints implementados
-Se han implementado todos los endpoints definidos en la guía:
-- Autenticación (/auth)
-- Gestión de usuarios (/users)
-- Gestión de pistas (/courts)
-- Disponibilidad (/availability)
-- Reservas (/reservations)
-- Administración (/admin/reservations)
-- Healthcheck (/health)
-Todos gestionan correctamente los códigos HTTP esperados (200, 201, 204, 400, 401, 403, 404, 409).
-
-### Notas adicionales 
-Actualmente existen dos clases para usuario:
-- Usuario: utilizada en esta fase sin base de datos.
-- User: preparada para la futura integración con persistencia y seguridad.
 
 
