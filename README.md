@@ -3,6 +3,7 @@ Projecto final de Programación de aplicaciones telemáticas, Grupo 1
 ## PRIMERA ENTREGA
 ### Descripción
 Este proyecto consiste en el desarrollo de una API REST para la gestión completa de reservas de pistas de pádel, siguiendo las especificaciones definidas en la guía oficial de la asignatura. En esta primera entrega se ha implementado parte del backend en Spring Boot con todos los endpoints definidos en el documento oficial del proyecto.
+
 Actualmente:
 - Todos los endpoints están implementados.
 - Las reglas de negocio están operativas.
