@@ -1,4 +1,4 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
 /*
 @RestController
@@ -32,6 +32,8 @@ record LoginRequest(String email, String password){}
  */
 
 
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.LoginRequest;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Usuario;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
