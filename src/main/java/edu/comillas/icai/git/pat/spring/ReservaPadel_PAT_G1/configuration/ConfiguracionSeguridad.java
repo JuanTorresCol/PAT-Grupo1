@@ -32,7 +32,8 @@ public class ConfiguracionSeguridad {
     }
 
 
-    @Bean public UserDetailsService usuarios() {
+    @Bean
+    public UserDetailsService usuarios() {
         UserDetails user = User.withDefaultPasswordEncoder()
                 .username("usuario")
                 .password("clave")
