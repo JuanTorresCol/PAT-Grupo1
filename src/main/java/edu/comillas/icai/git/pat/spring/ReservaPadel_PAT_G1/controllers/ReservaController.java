@@ -50,7 +50,7 @@ public class ReservaController {
         //hay que comprobar que la pista exista y que esté activa (404 y 400)
         log.debug("Intento de reserva sobre pista inexistente.");
         Pista pista = reservaser.comprobarPistaExiste(req.courtId());
-        if (Boolean.FALSE.equals(pista.activa())) {
+        if (Boolean.FALSE.equals(pista.getActiva())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La pista no está activa");
         }
 

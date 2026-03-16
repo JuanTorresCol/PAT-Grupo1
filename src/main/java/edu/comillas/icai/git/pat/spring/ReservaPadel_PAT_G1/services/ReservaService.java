@@ -39,8 +39,8 @@ public class ReservaService {
         return r;
     }
 
-    public Pista comprobarPistaExiste(String courtId) {
-        Pista pista = pistaser.getPista(courtId);
+    public Pista comprobarPistaExiste(String nombre) {
+        Pista pista = pistaser.verDetalle(nombre);
         if (pista == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La pista no existe");
         }

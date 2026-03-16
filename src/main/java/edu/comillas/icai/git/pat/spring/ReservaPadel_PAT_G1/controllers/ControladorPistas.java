@@ -2,30 +2,21 @@ package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.CourtUpdate;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Pista;
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.PistaRepository;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services.PistaService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 public class ControladorPistas {
     @Autowired
     PistaService pistaService;
-    //private final Map<Long, Map<LocalDate, ArrayList<Boolean>>> disponibilidades = new ConcurrentHashMap<>();
-    //private static final Logger log = LoggerFactory.getLogger(ControladorPistas.class);
 
     @PostMapping("/pistaPadel/courts")
     @ResponseStatus(HttpStatus.CREATED)
