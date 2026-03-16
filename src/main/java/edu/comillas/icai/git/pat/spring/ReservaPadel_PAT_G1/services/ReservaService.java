@@ -1,8 +1,10 @@
 package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services;
 
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Pista;
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Reserva;
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.ReservaPatchRequest;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.*;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.PistaRepository;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.ReservaRepository;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,38 +14,190 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ReservaService {
 
-    //horario del sistema (08:00–22:00)
+
+    //slots para los calculos
+    private int slotFromTime(LocalTime time) {
+        return (int) (Duration.between(ReservaService.APERTURA, time).toMinutes() / 30);
+    }
+    //horario del sistema (08 –22)
     public static final LocalTime APERTURA = LocalTime.of(8, 0);
     public static final LocalTime CIERRE = LocalTime.of(22, 0);
     //seria el record disponibilidad
     public record SlotInfo(LocalDate date, int slotStart, int slotEnd) {}
-    private final PistaService pistaser;
-    //almacenamiento de las reservas
-    private final Map<String, Reserva> reservas = new ConcurrentHashMap<>();
-    public ReservaService(PistaService servicio) {this.pistaser = servicio;}
-    public Map<String, Reserva> reservas() { return reservas; }
+    @Autowired
+    PistaService pistaser;
+    @Autowired
+    ReservaRepository reporeserva;
+    @Autowired
+    PistaRepository repopista;
+    @Autowired
+    UserRepository repouser;
 
-    //metodos usados en el controller
 
-    public Reserva obtenerReserva(String id) {
-        Reserva r = reservas.get(id);
-        if (r == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe la reserva");  //404
+    public Reserva obtenerReserva(Long id) {
+        return reporeserva.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe la reserva"));
+    }
+
+    private String getCurrentUsername() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    public Reserva crearReserva(ReservaCreateRequest req) {
+        Pista pista = comprobarPistaExiste(req.getCourtId());
+        if (Boolean.FALSE.equals(pista.getActiva())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La pista no está activa");
         }
+
+        SlotInfo s = validarYCalcularSlots(req.date(), req.startTime(), req.durationMins());
+
+
+        String username = getCurrentUsername();
+        User usuario = repouser.findByEmail(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        LocalTime startTime = APERTURA.plusMinutes((long) s.slotStart() * 30);
+        LocalTime endTime = APERTURA.plusMinutes((long) s.slotEnd() * 30);
+
+        comprobarSolapeBD(req.getCourtId(), s.date(), startTime, endTime);
+
+        Reserva nuevaReserva = new Reserva();
+        nuevaReserva.setUsername(usuario);
+        nuevaReserva.setPista(pista);
+        nuevaReserva.setDate(s.date());
+        nuevaReserva.setStartTime(startTime);
+        nuevaReserva.setEndTime(endTime);
+        nuevaReserva.setDurationMins(req.durationMins());
+        nuevaReserva.setEstado(ReservaStatus.CONFIRMADA);
+        nuevaReserva.setCreatedAt(Instant.now());
+
+        setSlots(req.getCourtId(), s.date(), s.slotStart(), s.slotEnd(), true);
+        return reporeserva.save(nuevaReserva);
+    }
+
+    public List<Reserva> listarReservasUsuario() {
+        String username = getCurrentUsername();
+
+        List<Reserva> reservasUsuario = reporeserva.findByUsernameEmail(username);
+        List<Reserva> resultado = new ArrayList<>();
+
+        for (Reserva r : reservasUsuario) {
+            if (r.getEstado() == ReservaStatus.CONFIRMADA && reservaPasada(r)) {
+                r.setEstado(ReservaStatus.PASADA);
+                r = reporeserva.save(r);
+            }
+            resultado.add(r);
+        }
+        return resultado;
+    }
+
+    public Reserva buscarReserva(Long reservaId) {
+        Reserva r = obtenerReserva(reservaId);
+        comprobarDuenoOAdmin(r.getUsername().getEmail());
         return r;
     }
 
-    public Pista comprobarPistaExiste(String courtId) {
-        Pista pista = pistaser.getPista(courtId);
-        if (pista == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La pista no existe");
+
+    public void cancelarReserva(Long reservaId) {
+        Reserva r = obtenerReserva(reservaId);
+        comprobarDuenoOAdmin(r.getUsername().getEmail());
+
+        if (r.getEstado() == ReservaStatus.CANCELADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva ya ha sido cancelada");
         }
+
+        if (r.getEstado() == ReservaStatus.PASADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede cancelar una reserva pasada");
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime inicioReserva = r.getDate().atTime(r.getStartTime());
+        long mins = Duration.between(ahora, inicioReserva).toMinutes();
+
+        //por politica si quedan menos de dos horas no deja reservar
+        if (mins < 120) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva no se puede cancelar porque quedan menos de 2 horas");
+        }
+        int slotStart = slotFromTime(r.getStartTime());
+        int slotEnd = slotFromTime(r.getEndTime());
+
+        setSlots(r.getPista().getIdPista(), r.getDate(), slotStart, slotEnd, false);
+
+        r.setEstado(ReservaStatus.CANCELADA);
+
+        reporeserva.save(r);
+    }
+
+    public Reserva modificarReserva(Long reservaId, ReservaPatchRequest req) {
+        Reserva actual = obtenerReserva(reservaId);
+        comprobarDuenoOAdmin(actual.getUsername().getEmail());
+
+
+        if (actual.getEstado() == ReservaStatus.CANCELADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede modificar una reserva cancelada");
+        }
+
+        if (actual.getEstado() == ReservaStatus.PASADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede modificar una reserva pasada");
+        }
+
+        SlotInfo s = recalcularYActualizarSlots(actual, req);
+
+
+        LocalTime startTime = APERTURA.plusMinutes((long) s.slotStart() * 30);
+        LocalTime endTime = APERTURA.plusMinutes((long) s.slotEnd() * 30);
+        int durationMins = (s.slotEnd() - s.slotStart()) * 30;
+
+        comprobarSolapeBD(actual.getPista().getIdPista(), s.date(), startTime, endTime);
+
+        actual.setDate(s.date());
+        actual.setStartTime(startTime);
+        actual.setEndTime(endTime);
+        actual.setDurationMins(durationMins);
+
+        return reporeserva.save(actual);
+    }
+
+    public List<Reserva> obtenerReservas(String username, String courtId, LocalDate date) {
+        Iterable<Reserva> todas = reporeserva.findAll(); //CRUD devuelve iterable no List
+        List<Reserva> resultado = new ArrayList<>();
+
+        for (Reserva r : todas) {
+            boolean filtrada = true;
+
+            if (username != null && !username.equals(r.getUsername().getEmail())) {
+                filtrada = false;
+            }
+
+            if (courtId != null && !courtId.equals(r.getPista().getIdPista())) {
+                filtrada = false;
+            }
+
+            if (date != null && !date.equals(r.getDate())) {
+                filtrada = false;
+            }
+
+            if (filtrada) {
+                resultado.add(r);
+            }
+        }
+
+        return resultado;
+    }
+
+
+    public Pista comprobarPistaExiste(Long courtId) {
+        Pista pista = repopista.findById(courtId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "La pista no existe"));
+
         return pista;
     }
 
@@ -84,7 +238,7 @@ public class ReservaService {
     }
 
     //para franjas horarias (ver si estan o no disponibles)
-    public void disponibilidadSlots(String courtId, LocalDate date, int slotStart, int slotEnd) {
+    public void disponibilidadSlots(Long courtId, LocalDate date, int slotStart, int slotEnd) {
         comprobarPistaExiste(courtId);
         ArrayList<Boolean> dia = pistaser.obtenerDisponibilidadDia(courtId, date);
         for (int i = slotStart; i < slotEnd; i++) {
@@ -93,7 +247,7 @@ public class ReservaService {
             }
         }
     }
-    public void setSlots(String courtId, LocalDate date, int slotStart, int slotEnd, boolean valor) {
+    public void setSlots(Long courtId, LocalDate date, int slotStart, int slotEnd, boolean valor) {
         comprobarPistaExiste(courtId);
         ArrayList<Boolean> dia = pistaser.obtenerDisponibilidadDia(courtId, date);
         for (int i = slotStart; i < slotEnd; i++) {
@@ -101,49 +255,39 @@ public class ReservaService {
         }
     }
 
-    //para el post
-    public SlotInfo validarYReservarSlots(String courtId, String date, String start, int duration){
-        //validación de fecha, hora y cálculo de franjas
-        SlotInfo s = validarYCalcularSlots(date, start, duration);
-        //409 comprobación de slots libres
-        disponibilidadSlots(courtId, s.date(), s.slotStart(), s.slotEnd());
-        //marcar slots como ocupados
-        setSlots(courtId, s.date(), s.slotStart(), s.slotEnd(), true);
-        return s;
-    }
 
     //para el patch
     public SlotInfo recalcularYActualizarSlots(Reserva actual, ReservaPatchRequest req) {
 
         // construir valores finales a partir de los que han sido cambiados
-        String finalDateStr = (req.date() != null) ? req.date() : actual.date().toString();
-        String finalStartStr = (req.startTime() != null) ? req.startTime() : actual.startTime().toString();
-        int finalDuration = (req.durationMins() != null) ? req.durationMins() : actual.durationMins();
+        String finalDateStr = (req.date() != null) ? req.date() : actual.getDate().toString();
+        String finalStartStr = (req.startTime() != null) ? req.startTime() : actual.getStartTime().toString();
+        int finalDuration = (req.durationMins() != null) ? req.durationMins() : actual.getDurationMins();
 
         //validar y calcular nuevos slots
         SlotInfo s = validarYCalcularSlots(finalDateStr, finalStartStr, finalDuration);
 
         //slots antiguos (no guardados)
-        int oldSlotStart = (int) (Duration.between(APERTURA, actual.startTime()).toMinutes() / 30);
-        int oldSlotEnd = (int) (Duration.between(APERTURA, actual.endTime()).toMinutes() / 30);
+        int oldSlotStart = slotFromTime(actual.getStartTime());
+        int oldSlotEnd = slotFromTime(actual.getEndTime());
 
         //liberar franjas
-        setSlots(actual.courtId(), actual.date(), oldSlotStart, oldSlotEnd, false);
+        setSlots(actual.getPista().getIdPista(), actual.getDate(), oldSlotStart, oldSlotEnd, false);
 
         try {
             //ver si hay disponibilidad de horario y ocupar nuevas franjas
-            disponibilidadSlots(actual.courtId(), s.date(), s.slotStart(), s.slotEnd());
-            setSlots(actual.courtId(), s.date(), s.slotStart(), s.slotEnd(), true);
+            disponibilidadSlots(actual.getPista().getIdPista(), s.date(), s.slotStart(), s.slotEnd());
+            setSlots(actual.getPista().getIdPista(), s.date(), s.slotStart(), s.slotEnd(), true);
         } catch (ResponseStatusException ex) {
             //si el nuevo rango no está disponible, se restauran los slots antiguos
-            setSlots(actual.courtId(), actual.date(), oldSlotStart, oldSlotEnd, true);
+            setSlots(actual.getPista().getIdPista(), actual.getDate(), oldSlotStart, oldSlotEnd, true);
             throw ex;
         }
         return s;
     }
 
 
-    public void comprobarDuenoOAdmin(String owner) {
+    public void comprobarDuenoOAdmin(String user) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
         boolean isAdmin = false;
@@ -153,17 +297,29 @@ public class ReservaService {
                 break;
             }
         }
-        if (!isAdmin && !owner.equals(username)) {
+        if (!isAdmin && !user.equals(username)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso");
+        }
+    }
+
+    public void comprobarSolapeBD(Long pistaId, LocalDate date, LocalTime nuevaInicio, LocalTime nuevaFin) {
+        List<Reserva> reservas = reporeserva.findByPistaIdPistaAndDate(pistaId, date);
+        for (Reserva r : reservas) {
+            if (r.getEstado() != ReservaStatus.CANCELADA) {
+                boolean solapa = nuevaInicio.isBefore(r.getEndTime()) && nuevaFin.isAfter(r.getStartTime());
+                if (solapa) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
+                }
+            }
         }
     }
 
     //añadido: para el control de estados se ha añadido que las reservas cuya fecha ya haya expirado aparezcan como pasadas (no modificables)
     public boolean reservaPasada(Reserva r) {
         LocalDate hoy = LocalDate.now();
-        if (r.date().isBefore(hoy)) return true;
-        if (r.date().isAfter(hoy)) return false;
-        LocalTime fin = r.endTime();
+        if (r.getDate().isBefore(hoy)) return true;
+        if (r.getDate().isAfter(hoy)) return false;
+        LocalTime fin = r.getEndTime();
         return !fin.isAfter(LocalTime.now()); // fin menor o igual que ahora
     }
 }

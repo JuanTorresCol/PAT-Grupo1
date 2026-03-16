@@ -49,7 +49,7 @@ public class PistaService {
 
     public ArrayList<Pista> listarPistas(Boolean filtro){
         log.info("Solicitud listado de pistas");
-        if (pistaRepository.selectAll() != null) {
+        if (pistaRepository.selectAll() == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existen pistas");
         }
         ArrayList<Pista> pistas = pistaRepository.selectAll();
@@ -142,6 +142,7 @@ public class PistaService {
     }
 
     public ArrayList<Boolean> obtenerDisponibilidadDia(Long courtId, LocalDate fecha) {
+        disponibilidades.putIfAbsent(courtId, new HashMap<>());
         Map<LocalDate, ArrayList<Boolean>> mapaDias = disponibilidades.get(courtId);
         mapaDias.putIfAbsent(fecha, new ArrayList<>(Collections.nCopies(28, false)));
         return mapaDias.get(fecha);

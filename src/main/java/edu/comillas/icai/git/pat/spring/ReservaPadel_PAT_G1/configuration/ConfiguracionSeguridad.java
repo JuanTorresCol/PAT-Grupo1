@@ -21,9 +21,12 @@ public class ConfiguracionSeguridad {
     @Bean
     public SecurityFilterChain configuracion(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())  //ignoringRequestMatchers("pistaPadel/auth/**")
+                .csrf(csrf -> csrf.disable())
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
+                )
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/pistaPadel/auth/register", "/pistaPadel/auth/login", "/pistaPadel/auth/me").permitAll()
+                        .requestMatchers("/h2-console/**","/pistaPadel/auth/register", "/pistaPadel/auth/login", "/pistaPadel/auth/me").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(Customizer.withDefaults())

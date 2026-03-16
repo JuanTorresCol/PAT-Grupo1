@@ -1,11 +1,14 @@
 package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services;
 
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Reserva;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.User;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 @Service
@@ -21,7 +24,12 @@ public class UserService {
     //obtener todos los usuarios (solo ADMIN puede hacerlo)
     public List<User> getAllUsers() {
         logger.info("Obteniendo listado de todos los usuarios");
-        return userRepository.findAll();
+        Iterable<User> todas = userRepository.findAll(); //CRUD devuelve iterable no List
+
+        List<User> resultado = new ArrayList<>();
+        todas.forEach(resultado::add);
+
+        return resultado;
     }
 
     //obtener usuario por ID
