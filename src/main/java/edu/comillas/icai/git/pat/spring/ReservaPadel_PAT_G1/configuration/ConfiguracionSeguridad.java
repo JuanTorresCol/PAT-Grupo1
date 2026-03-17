@@ -36,8 +36,8 @@ public class ConfiguracionSeguridad {
                         .requestMatchers("/pistaPadel/admin/**").hasRole("ADMIN")
                         .requestMatchers("/pistaPadel/reservations/**").authenticated()
                         .anyRequest().permitAll()
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);;
+                );
+
         return http.build();
     }
 
