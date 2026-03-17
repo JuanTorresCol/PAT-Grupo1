@@ -34,6 +34,7 @@ public class Reserva{
         private LocalTime endTime;
         @Column(nullable = false, unique = false)
         private int durationMins;
+        @Enumerated(EnumType.STRING)
         @Column(nullable = false, unique = false)
         private ReservaStatus estado;
         @Column(nullable = false, unique = false)

@@ -15,24 +15,17 @@ import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ReservaService {
 
 
-    //slots para los calculos
-    private int slotFromTime(LocalTime time) {
-        return (int) (Duration.between(ReservaService.APERTURA, time).toMinutes() / 30);
-    }
     //horario del sistema (08 –22)
     public static final LocalTime APERTURA = LocalTime.of(8, 0);
     public static final LocalTime CIERRE = LocalTime.of(22, 0);
     //seria el record disponibilidad
     public record SlotInfo(LocalDate date, int slotStart, int slotEnd) {}
-    @Autowired
-    PistaService pistaser;
+
     @Autowired
     ReservaRepository reporeserva;
     @Autowired
@@ -58,7 +51,6 @@ public class ReservaService {
 
         SlotInfo s = validarYCalcularSlots(req.date(), req.startTime(), req.durationMins());
 
-
         String username = getCurrentUsername();
         User usuario = repouser.findByEmail(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
@@ -66,7 +58,7 @@ public class ReservaService {
         LocalTime startTime = APERTURA.plusMinutes((long) s.slotStart() * 30);
         LocalTime endTime = APERTURA.plusMinutes((long) s.slotEnd() * 30);
 
-        comprobarSolapeBD(req.getCourtId(), s.date(), startTime, endTime);
+        comprobarSolapeBD(req.getCourtId(), s.date(), startTime, endTime, null);
 
         Reserva nuevaReserva = new Reserva();
         nuevaReserva.setUsername(usuario);
@@ -78,7 +70,6 @@ public class ReservaService {
         nuevaReserva.setEstado(ReservaStatus.CONFIRMADA);
         nuevaReserva.setCreatedAt(Instant.now());
 
-        setSlots(req.getCourtId(), s.date(), s.slotStart(), s.slotEnd(), true);
         return reporeserva.save(nuevaReserva);
     }
 
@@ -101,7 +92,14 @@ public class ReservaService {
     public Reserva buscarReserva(Long reservaId) {
         Reserva r = obtenerReserva(reservaId);
         comprobarDuenoOAdmin(r.getUsername().getEmail());
+
+        if (r.getEstado() == ReservaStatus.CONFIRMADA && reservaPasada(r)) {
+            r.setEstado(ReservaStatus.PASADA);
+            r = reporeserva.save(r);
+        }
+
         return r;
+
     }
 
 
@@ -125,10 +123,6 @@ public class ReservaService {
         if (mins < 120) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva no se puede cancelar porque quedan menos de 2 horas");
         }
-        int slotStart = slotFromTime(r.getStartTime());
-        int slotEnd = slotFromTime(r.getEndTime());
-
-        setSlots(r.getPista().getIdPista(), r.getDate(), slotStart, slotEnd, false);
 
         r.setEstado(ReservaStatus.CANCELADA);
 
@@ -148,14 +142,14 @@ public class ReservaService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede modificar una reserva pasada");
         }
 
-        SlotInfo s = recalcularYActualizarSlots(actual, req);
+        SlotInfo s = recalcularSlots(actual, req);
 
 
         LocalTime startTime = APERTURA.plusMinutes((long) s.slotStart() * 30);
         LocalTime endTime = APERTURA.plusMinutes((long) s.slotEnd() * 30);
         int durationMins = (s.slotEnd() - s.slotStart()) * 30;
 
-        comprobarSolapeBD(actual.getPista().getIdPista(), s.date(), startTime, endTime);
+        comprobarSolapeBD(actual.getPista().getIdPista(), s.date(), startTime, endTime, actual.getId());
 
         actual.setDate(s.date());
         actual.setStartTime(startTime);
@@ -176,7 +170,7 @@ public class ReservaService {
                 filtrada = false;
             }
 
-            if (courtId != null && !courtId.equals(r.getPista().getIdPista())) {
+            if (courtId != null && !courtId.equals(String.valueOf(r.getPista().getIdPista()))) {
                 filtrada = false;
             }
 
@@ -237,55 +231,19 @@ public class ReservaService {
         return new SlotInfo(date, slotStart, slotEnd);
     }
 
-    //para franjas horarias (ver si estan o no disponibles)
-    public void disponibilidadSlots(Long courtId, LocalDate date, int slotStart, int slotEnd) {
-        comprobarPistaExiste(courtId);
-        ArrayList<Boolean> dia = pistaser.obtenerDisponibilidadDia(courtId, date);
-        for (int i = slotStart; i < slotEnd; i++) {
-            if (dia.get(i)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
-            }
-        }
-    }
-    public void setSlots(Long courtId, LocalDate date, int slotStart, int slotEnd, boolean valor) {
-        comprobarPistaExiste(courtId);
-        ArrayList<Boolean> dia = pistaser.obtenerDisponibilidadDia(courtId, date);
-        for (int i = slotStart; i < slotEnd; i++) {
-            dia.set(i, valor);
-        }
-    }
 
 
     //para el patch
-    public SlotInfo recalcularYActualizarSlots(Reserva actual, ReservaPatchRequest req) {
+    public SlotInfo recalcularSlots(Reserva actual, ReservaPatchRequest req) {
 
         // construir valores finales a partir de los que han sido cambiados
         String finalDateStr = (req.date() != null) ? req.date() : actual.getDate().toString();
         String finalStartStr = (req.startTime() != null) ? req.startTime() : actual.getStartTime().toString();
         int finalDuration = (req.durationMins() != null) ? req.durationMins() : actual.getDurationMins();
 
-        //validar y calcular nuevos slots
-        SlotInfo s = validarYCalcularSlots(finalDateStr, finalStartStr, finalDuration);
+        return validarYCalcularSlots(finalDateStr, finalStartStr, finalDuration);
 
-        //slots antiguos (no guardados)
-        int oldSlotStart = slotFromTime(actual.getStartTime());
-        int oldSlotEnd = slotFromTime(actual.getEndTime());
-
-        //liberar franjas
-        setSlots(actual.getPista().getIdPista(), actual.getDate(), oldSlotStart, oldSlotEnd, false);
-
-        try {
-            //ver si hay disponibilidad de horario y ocupar nuevas franjas
-            disponibilidadSlots(actual.getPista().getIdPista(), s.date(), s.slotStart(), s.slotEnd());
-            setSlots(actual.getPista().getIdPista(), s.date(), s.slotStart(), s.slotEnd(), true);
-        } catch (ResponseStatusException ex) {
-            //si el nuevo rango no está disponible, se restauran los slots antiguos
-            setSlots(actual.getPista().getIdPista(), actual.getDate(), oldSlotStart, oldSlotEnd, true);
-            throw ex;
-        }
-        return s;
     }
-
 
     public void comprobarDuenoOAdmin(String user) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -302,15 +260,17 @@ public class ReservaService {
         }
     }
 
-    public void comprobarSolapeBD(Long pistaId, LocalDate date, LocalTime nuevaInicio, LocalTime nuevaFin) {
+    public void comprobarSolapeBD(Long pistaId, LocalDate date, LocalTime nuevaInicio, LocalTime nuevaFin, Long reserva_actualId) {
         List<Reserva> reservas = reporeserva.findByPistaIdPistaAndDate(pistaId, date);
         for (Reserva r : reservas) {
-            if (r.getEstado() != ReservaStatus.CANCELADA) {
+            if (r.getEstado() == ReservaStatus.CANCELADA) {continue;}
+            if (reserva_actualId != null && r.getId().equals(reserva_actualId)) {
+                continue;
+                }
                 boolean solapa = nuevaInicio.isBefore(r.getEndTime()) && nuevaFin.isAfter(r.getStartTime());
                 if (solapa) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
                 }
-            }
         }
     }
 
