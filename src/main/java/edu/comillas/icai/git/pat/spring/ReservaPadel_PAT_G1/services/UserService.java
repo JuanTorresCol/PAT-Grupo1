@@ -1,5 +1,7 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.users;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services;
 
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.User;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

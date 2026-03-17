@@ -1,7 +1,8 @@
-package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.users;
+package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,45 +13,37 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
-//este metodo es provisional porque no funciona sin quitar la dependency de security
-//de pom que vosotros usais. No guarda relacion con los usuarios de la base de datos.
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@Profile("!test")
 public class ConfiguracionSeguridad {
-
     @Bean
     public SecurityFilterChain configuracion(HttpSecurity http) throws Exception {
-
         http
-                .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/pistaPadel/users").permitAll() // permitir registro
+                .csrf(csrf -> csrf.disable())  //ignoringRequestMatchers("pistaPadel/auth/**")
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/pistaPadel/auth/register", "/pistaPadel/auth/login", "/pistaPadel/auth/me").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(Customizer.withDefaults())
-                .httpBasic(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable());
-
+                .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 
-    @Bean
-    public UserDetailsService usuarios() {
 
+    @Bean public UserDetailsService usuarios() {
         UserDetails user = User.withDefaultPasswordEncoder()
                 .username("usuario")
                 .password("clave")
                 .roles("USER")
                 .build();
-
         UserDetails admin = User.withDefaultPasswordEncoder()
                 .username("admin")
-                .password("admin")
+                .password("clave")
                 .roles("ADMIN")
                 .build();
-
-        return new InMemoryUserDetailsManager(user, admin);
+        return new InMemoryUserDetailsManager(user,admin);
     }
 }
 
