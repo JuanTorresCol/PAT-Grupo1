@@ -29,7 +29,7 @@ public class PistaService {
         log.info("Solicitud creación pista id={}", pista.getIdPista());
         log.debug("Datos pista recibida: nombre={}, ubicacion={}, precio={}", pista.getNombre(), pista.getUbicacion(), pista.getPrecioHora());
 
-        if (pistaRepository.findByIdPista(pista.getIdPista())!=null) {
+        if (pistaRepository.existsByNombre(pista.getNombre())) {
             log.warn("Intento de crear pista con id existente id={}", pista.getIdPista());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una pista con ese ID");
         }
@@ -51,7 +51,7 @@ public class PistaService {
         log.info("Solicitud listado de pistas");
         log.debug("Filtro recibido={}", filtro);
 
-        if (pistaRepository.selectAll() != null) {
+        if (pistaRepository.selectAll() == null || pistaRepository.selectAll().isEmpty()) {
             log.warn("No existen pistas en el repositorio");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existen pistas");
         }
@@ -85,6 +85,7 @@ public class PistaService {
     }
 
     public Pista actuPista(String nombre, CourtUpdate newCourt){
+
         log.info("Solicitud actualización pista nombre={}", nombre);
         log.debug("Datos actualización recibidos={}", newCourt);
 
@@ -94,6 +95,7 @@ public class PistaService {
             log.warn("Intento de actualizar pista inexistente nombre={}", nombre);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe ninguna pista con ese ID");
         }
+
         if (newCourt.isEmpty()) {
             log.warn("Actualización sin cambios para pista nombre={}", nombre);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se han introducido cambios");
@@ -109,8 +111,10 @@ public class PistaService {
         );
 
         pistaRepository.save(nueva);
+
         log.info("Pista actualizada correctamente id={}", nueva.getIdPista());
-        log.debug("Nueva configuración pista nombre={}, ubicacion={}, precio={}, activa={}", nueva.getNombre(), nueva.getUbicacion(), nueva.getPrecioHora(), nueva.getActiva());
+        log.debug("Nueva configuración pista nombre={}, ubicacion={}, precio={}, activa={}",
+                nueva.getNombre(), nueva.getUbicacion(), nueva.getPrecioHora(), nueva.getActiva());
 
         return nueva;
     }
@@ -123,8 +127,8 @@ public class PistaService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existen pistas con ese nombre");
         }
 
-        pistaRepository.delete(pistaRepository.findByNombre(nombre));
         disponibilidades.remove(pistaRepository.findByNombre(nombre).getNombre());
+        pistaRepository.delete(pistaRepository.findByNombre(nombre));
 
         log.info("Pista eliminada correctamente nombre={}", nombre);
     }
@@ -143,7 +147,7 @@ public class PistaService {
         Map<Long, ArrayList<Boolean>> respuesta = new ConcurrentHashMap<>();
 
         if (nombre != null) {
-            if (!pistaRepository.existsByNombre(nombre)) {
+            if (!pistaRepository.existsByNombre(nombre) || pistaRepository.existsByNombre(nombre) == null) {
                 log.warn("Consulta disponibilidad pista inexistente nombre={}", nombre);
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existen pistas con ese ID");
             }

@@ -26,6 +26,8 @@ public class Pista {
 
     // cons
 
+    public Pista() {}
+
     public Pista(Long idPista, String nombre, String ubicacion, Double precioHora, Boolean activa, Date fechaAlta) {
         this.idPista = idPista;
         this.nombre = nombre;
