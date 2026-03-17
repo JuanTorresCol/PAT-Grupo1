@@ -2,6 +2,7 @@ package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services;
 
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Reserva;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.User;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.UserPatchRequest;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,24 +57,24 @@ public class UserService {
     }
 
     //actualizar usuario
-    public User updateUser(Long id, User updatedUser) {
+    public User updateUser(Long id, UserPatchRequest updatedUser) {
 
         User existingUser = getUserById(id);
 
-        if (!existingUser.getEmail().equals(updatedUser.getEmail()) &&
-                userRepository.existsByEmail(updatedUser.getEmail())) {
+        if (!existingUser.getEmail().equals(updatedUser.email()) &&
+                userRepository.existsByEmail(updatedUser.email())) {
 
-            logger.error("Intento de actualización con email duplicado: {}", updatedUser.getEmail());
+            logger.error("Intento de actualización con email duplicado: {}", updatedUser.email());
             throw new RuntimeException("El email ya está en uso");
 
             //si el email del usuario actual no es igual al que se quiere cambiar
             //y ya existe en la base de datos debe dar error -> email único!
         }
 
-        existingUser.setNombre(updatedUser.getNombre());
-        existingUser.setApellidos(updatedUser.getApellidos());
-        existingUser.setEmail(updatedUser.getEmail());
-        existingUser.setTelefono(updatedUser.getTelefono());
+        existingUser.setNombre(updatedUser.nombre());
+        existingUser.setApellidos(updatedUser.apellidos());
+        existingUser.setEmail(updatedUser.email());
+        existingUser.setTelefono(updatedUser.telefono());
 
         logger.info("Usuario actualizado con ID: {}", id);
 

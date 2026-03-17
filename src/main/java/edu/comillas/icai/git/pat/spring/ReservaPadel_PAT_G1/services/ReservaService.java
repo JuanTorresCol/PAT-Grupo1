@@ -39,11 +39,8 @@ public class ReservaService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe la reserva"));
     }
 
-    private String getCurrentUsername() {
-        return SecurityContextHolder.getContext().getAuthentication().getName();
-    }
 
-    public Reserva crearReserva(ReservaCreateRequest req) {
+    public Reserva crearReserva(ReservaCreateRequest req, String username) {
         Pista pista = comprobarPistaExiste(req.getCourtId());
         if (Boolean.FALSE.equals(pista.getActiva())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La pista no está activa");
@@ -51,9 +48,9 @@ public class ReservaService {
 
         SlotInfo s = validarYCalcularSlots(req.date(), req.startTime(), req.durationMins());
 
-        String username = getCurrentUsername();
         User usuario = repouser.findByEmail(username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
 
         LocalTime startTime = APERTURA.plusMinutes((long) s.slotStart() * 30);
         LocalTime endTime = APERTURA.plusMinutes((long) s.slotEnd() * 30);
@@ -73,8 +70,7 @@ public class ReservaService {
         return reporeserva.save(nuevaReserva);
     }
 
-    public List<Reserva> listarReservasUsuario() {
-        String username = getCurrentUsername();
+    public List<Reserva> listarReservasUsuario(String username) {
 
         List<Reserva> reservasUsuario = reporeserva.findByUsernameEmail(username);
         List<Reserva> resultado = new ArrayList<>();
@@ -89,9 +85,10 @@ public class ReservaService {
         return resultado;
     }
 
-    public Reserva buscarReserva(Long reservaId) {
+    public Reserva buscarReserva(Long reservaId, String username, boolean esAdmin) {
         Reserva r = obtenerReserva(reservaId);
-        comprobarDuenoOAdmin(r.getUsername().getEmail());
+        comprobarDuenoOAdmin(r.getUsername().getEmail(), username, esAdmin);
+
 
         if (r.getEstado() == ReservaStatus.CONFIRMADA && reservaPasada(r)) {
             r.setEstado(ReservaStatus.PASADA);
@@ -103,9 +100,10 @@ public class ReservaService {
     }
 
 
-    public void cancelarReserva(Long reservaId) {
+    public void cancelarReserva(Long reservaId, String username, boolean esAdmin) {
         Reserva r = obtenerReserva(reservaId);
-        comprobarDuenoOAdmin(r.getUsername().getEmail());
+        comprobarDuenoOAdmin(r.getUsername().getEmail(), username, esAdmin);
+
 
         if (r.getEstado() == ReservaStatus.CANCELADA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva ya ha sido cancelada");
@@ -129,9 +127,9 @@ public class ReservaService {
         reporeserva.save(r);
     }
 
-    public Reserva modificarReserva(Long reservaId, ReservaPatchRequest req) {
+    public Reserva modificarReserva(Long reservaId, ReservaPatchRequest req, String username, boolean esAdmin) {
         Reserva actual = obtenerReserva(reservaId);
-        comprobarDuenoOAdmin(actual.getUsername().getEmail());
+        comprobarDuenoOAdmin(actual.getUsername().getEmail(), username, esAdmin);
 
 
         if (actual.getEstado() == ReservaStatus.CANCELADA) {
@@ -245,21 +243,6 @@ public class ReservaService {
 
     }
 
-    public void comprobarDuenoOAdmin(String user) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
-        boolean isAdmin = false;
-        for (var authority : auth.getAuthorities()) {
-            if ("ROLE_ADMIN".equals(authority.getAuthority())) {
-                isAdmin = true;
-                break;
-            }
-        }
-        if (!isAdmin && !user.equals(username)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso");
-        }
-    }
-
     public void comprobarSolapeBD(Long pistaId, LocalDate date, LocalTime nuevaInicio, LocalTime nuevaFin, Long reserva_actualId) {
         List<Reserva> reservas = reporeserva.findByPistaIdPistaAndDate(pistaId, date);
         for (Reserva r : reservas) {
@@ -271,6 +254,12 @@ public class ReservaService {
                 if (solapa) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "Slot ocupado");
                 }
+        }
+    }
+
+    public void comprobarDuenoOAdmin(String usuario_dueno, String usuario_act, boolean esAdmin) {
+        if (!esAdmin && !usuario_dueno.equals(usuario_act)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso");
         }
     }
 
