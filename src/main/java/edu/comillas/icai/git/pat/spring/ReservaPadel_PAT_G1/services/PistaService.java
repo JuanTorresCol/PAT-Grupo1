@@ -99,8 +99,10 @@ public class PistaService {
         if (!pistaRepository.existsByNombre(nombre)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existen pistas con ese nombre");
         }
-        pistaRepository.delete(pistaRepository.findByNombre(nombre));
-        disponibilidades.remove(pistaRepository.findByNombre(nombre).getIdPista());
+
+        Pista pista = pistaRepository.findByNombre(nombre);
+        pistaRepository.delete(pista);
+        disponibilidades.remove(pista.getIdPista());
     }
 
     public Map<Long, ArrayList<Boolean>> checkAvailability(String date, String nombre){

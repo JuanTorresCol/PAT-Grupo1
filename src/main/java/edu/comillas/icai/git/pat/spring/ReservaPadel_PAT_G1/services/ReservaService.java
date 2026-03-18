@@ -1,9 +1,12 @@
 package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services;
 
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers.ReservaController;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.*;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.PistaRepository;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.ReservaRepository;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -26,6 +29,8 @@ public class ReservaService {
     //seria el record disponibilidad
     public record SlotInfo(LocalDate date, int slotStart, int slotEnd) {}
 
+    private static final Logger log = LoggerFactory.getLogger(ReservaController.class);
+
     @Autowired
     ReservaRepository reporeserva;
     @Autowired
@@ -40,14 +45,15 @@ public class ReservaService {
     }
 
 
-    public Reserva crearReserva(ReservaCreateRequest req, String username) {
+    public Reserva crearReserva(ReservaCreateRequest req, User user) {
         Pista pista = comprobarPistaExiste(req.getCourtId());
+
+        log.info("metodo crear en el service");
         if (Boolean.FALSE.equals(pista.getActiva())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La pista no está activa");
         }
 
         SlotInfo s = validarYCalcularSlots(req.date(), req.startTime(), req.durationMins());
-
 
 
 
@@ -57,7 +63,7 @@ public class ReservaService {
         comprobarSolapeBD(req.getCourtId(), s.date(), startTime, endTime, null);
 
         Reserva nuevaReserva = new Reserva();
-        //nuevaReserva.setUsername(usuario);
+        nuevaReserva.setUsername(user);
         nuevaReserva.setPista(pista);
         nuevaReserva.setDate(s.date());
         nuevaReserva.setStartTime(startTime);
@@ -69,9 +75,9 @@ public class ReservaService {
         return reporeserva.save(nuevaReserva);
     }
 
-    public List<Reserva> listarReservasUsuario(String username) {
+    public List<Reserva> listarReservasUsuario(User user) {
 
-        List<Reserva> reservasUsuario = reporeserva.findByUsernameEmail(username);
+        List<Reserva> reservasUsuario = reporeserva.findByUsernameEmail(user.getEmail());
         List<Reserva> resultado = new ArrayList<>();
 
         for (Reserva r : reservasUsuario) {
@@ -84,10 +90,8 @@ public class ReservaService {
         return resultado;
     }
 
-    public Reserva buscarReserva(Long reservaId, String username, boolean esAdmin) {
+    public Reserva buscarReserva(Long reservaId) {
         Reserva r = obtenerReserva(reservaId);
-        comprobarDuenoOAdmin(r.getUsername().getEmail(), username, esAdmin);
-
 
         if (r.getEstado() == ReservaStatus.CONFIRMADA && reservaPasada(r)) {
             r.setEstado(ReservaStatus.PASADA);
@@ -99,10 +103,8 @@ public class ReservaService {
     }
 
 
-    public void cancelarReserva(Long reservaId, String username, boolean esAdmin) {
+    public void cancelarReserva(Long reservaId) {
         Reserva r = obtenerReserva(reservaId);
-        comprobarDuenoOAdmin(r.getUsername().getEmail(), username, esAdmin);
-
 
         if (r.getEstado() == ReservaStatus.CANCELADA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva ya ha sido cancelada");
@@ -126,9 +128,8 @@ public class ReservaService {
         reporeserva.save(r);
     }
 
-    public Reserva modificarReserva(Long reservaId, ReservaPatchRequest req, String username, boolean esAdmin) {
+    public Reserva modificarReserva(Long reservaId, ReservaPatchRequest req) {
         Reserva actual = obtenerReserva(reservaId);
-        comprobarDuenoOAdmin(actual.getUsername().getEmail(), username, esAdmin);
 
 
         if (actual.getEstado() == ReservaStatus.CANCELADA) {
@@ -179,6 +180,8 @@ public class ReservaService {
                 resultado.add(r);
             }
         }
+
+        log.info("metodo del service");
 
         return resultado;
     }

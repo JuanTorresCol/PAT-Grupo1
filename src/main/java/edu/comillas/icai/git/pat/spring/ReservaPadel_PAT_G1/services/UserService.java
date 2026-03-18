@@ -29,6 +29,14 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    public void esAdmin(User user){
+        if (!user.getRol().equals(Rol.ADMIN)){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autorizado");
+        }
+
+
+    }
+
     //obtener todos los usuarios (solo ADMIN puede hacerlo)
     public List<User> getAllUsers() {
         logger.info("Obteniendo listado de todos los usuarios");
@@ -53,12 +61,13 @@ public class UserService {
 
         logger.info("Intentando crear usuario con email: {}", user.getEmail());
 
-        if (userRepository.existsByEmail(user.getEmail())) {
+        if (userRepository.findByEmail(user.getEmail())!=null) {
             logger.error("El email ya existe: {}", user.getEmail());
-            throw new RuntimeException("El email ya está registrado");
-            //siempre que se de logger.error hay que hacer exception
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un usuario con ese email");
+
 
         }
+
 
         User usuarioNuevo = new User();
         usuarioNuevo.setNombre(user.getNombre());
@@ -68,19 +77,21 @@ public class UserService {
         usuarioNuevo.setTelefono(user.getTelefono());
         usuarioNuevo.setActivo(true);
         usuarioNuevo.setRol(Rol.USER);
-        usuarioNuevo.setFechaRegistro(LocalDate.from(Instant.now()));
+        usuarioNuevo.setFechaRegistro(LocalDate.now());
         return userRepository.save(usuarioNuevo);
     }
 
 
     public User autentica(String token){
 
-        if (token == null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+
+        if (token == null || token.isEmpty() || userRepository.findByEmail(token)==null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Token no enviado");
         }
 
-        User user = userRepository.findByEmail(token);
-        return user;
+
+
+        return userRepository.findByEmail(token);
 
 
     }
@@ -128,7 +139,7 @@ public class UserService {
         }
 
         //verifico password
-        if (user.getPassword() != password) {
+        if (!user.getPassword().equals(password)) {
             throw new RuntimeException("Password incorrecta");
         }
 

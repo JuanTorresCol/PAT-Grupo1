@@ -42,21 +42,11 @@ public class AuthController {
 
     @GetMapping("/me")
     public User getMe(@RequestHeader("Authorization") String token){
-        User user = userService.autentica(token);
-        return user;
+        return userService.autentica(token);
     }
 
 
 
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> manejarErrores(RuntimeException ex) {
-        //si el error es de login, devolvemos 401 (no autorizado)
-        if (ex.getMessage().contains("no encontrado") || ex.getMessage().contains("incorrecta")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
-        }
-        //para cualquier otro error, devolvemos un 500
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error en el servidor");
-    }
 
 }

@@ -2,6 +2,7 @@ package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.*;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services.ReservaService;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services.UserService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,18 +24,24 @@ public class ReservaController {
     @Autowired
     ReservaService reservaser;
 
+    @Autowired
+    UserService userService;
+
 
     //crear reserva
     //respuesta: 201, 400, 401, 404, 409
     @PostMapping("/pistaPadel/reservations")
     @ResponseStatus(HttpStatus.CREATED)
-    public Reserva crear(@Valid @RequestBody ReservaCreateRequest req, BindingResult br, Authentication authentication) {
+    public Reserva crear(@Valid @RequestBody ReservaCreateRequest req, BindingResult br, @RequestHeader("Authorization") String username) {
         log.info("Solicitud de creación de reserva recibida");
-        if (br.hasErrors()) {
+        /*if (br.hasErrors()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Campos inválidos");
         }
-        String username = authentication.getName();
-        Reserva nuevaReserva = reservaser.crearReserva(req, username);
+
+         */
+        User user = userService.autentica(username);
+        log.info("HOLA");
+        Reserva nuevaReserva = reservaser.crearReserva(req, user);
         log.info("Reserva creada correctamente.");
         return nuevaReserva;
     }
@@ -42,10 +49,12 @@ public class ReservaController {
     //get todas las reservas de una persona
     // 200, 401
     @GetMapping("/pistaPadel/reservations")
-    public List<Reserva> listar(Authentication authentication) {
+    public List<Reserva> listar( @RequestHeader("Authorization") String username) {
+
+        User user = userService.autentica(username);
+
         log.debug("Solicitud para listar todas las reservas");
-        String username = authentication.getName();
-        List<Reserva> resultado = reservaser.listarReservasUsuario(username);
+        List<Reserva> resultado = reservaser.listarReservasUsuario(user);
 
         log.info("Se han devuelto reservas");
         return resultado;
@@ -55,12 +64,12 @@ public class ReservaController {
     //get reservas por id de reserva
     // 200, 401, 403, 404
     @GetMapping("/pistaPadel/reservations/{reservaId}")
-    public Reserva buscar(@PathVariable Long reservaId, Authentication authentication) {
+    public Reserva buscar(@PathVariable Long reservaId, @RequestHeader("Authorization") String username) {
+
+        User user = userService.autentica(username);
 
         log.debug("Solicitud para obtener reserva con ID {}", reservaId);
-        String username = authentication.getName();
-        boolean esAdmin = esAdmin(authentication);
-        Reserva r = reservaser.buscarReserva(reservaId, username, esAdmin);
+        Reserva r = reservaser.buscarReserva(reservaId);
 
         log.info("Reserva {} encontrada correctamente", reservaId);
         return r;
@@ -70,14 +79,14 @@ public class ReservaController {
     //204, 401, 403, 404, 409
     @DeleteMapping("/pistaPadel/reservations/{reservaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long reservaId,  Authentication authentication) {
+    public void eliminar(@PathVariable Long reservaId, @RequestHeader("Authorization") String username) {
+
+        User user = userService.autentica(username);
 
         log.info("Solicitud de cancelación para reserva {}", reservaId);
 
-        String username = authentication.getName();
-        boolean esAdmin = esAdmin(authentication);
 
-        reservaser.cancelarReserva(reservaId, username,esAdmin);
+        reservaser.cancelarReserva(reservaId);
 
         log.info("Reserva {} cancelada correctamente", reservaId);
     }
@@ -86,17 +95,19 @@ public class ReservaController {
     //200, 400, 401, 403, 404, 409
     @PatchMapping("/pistaPadel/reservations/{reservaId}")
     public Reserva cambiar(@PathVariable Long reservaId,
-                           @RequestBody ReservaPatchRequest req, Authentication authentication) {
+                           @RequestBody ReservaPatchRequest req,@RequestHeader("Authorization") String username) {
+
+        User user = userService.autentica(username);
 
         log.info("Solicitud de modificación de reserva {}", reservaId);
+
+
 
         if (req == null || req.isEmpty()) {
             log.warn("Modificación rechazada: body vacío. Reserva {}", reservaId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se han introducido cambios");
         }
-        String username = authentication.getName();
-        boolean esAdmin = esAdmin(authentication);
-        Reserva actualizada = reservaser.modificarReserva(reservaId, req, username, esAdmin);
+        Reserva actualizada = reservaser.modificarReserva(reservaId, req);
 
         log.info("Reserva modificada correctamente");
         return actualizada;
@@ -104,15 +115,17 @@ public class ReservaController {
 
     // Ver todas las reservas según determinados filtros
     @GetMapping("/pistaPadel/admin/reservations")
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<Reserva> obtenerReservas(@RequestParam(required = false) String username,
+    public List<Reserva> obtenerReservas(@RequestParam(required = false) String nombre,
                                          @RequestParam(required = false) String courtId,
-                                         @RequestParam(required = false) LocalDate date) {
-        return reservaser.obtenerReservas(username, courtId, date);
+                                         @RequestParam(required = false) LocalDate date,
+                                         @RequestHeader("Authorization") String username) {
+        User user = userService.autentica(username);
+        userService.esAdmin(user);
+
+        log.info("hola estoy en el endpoint");
+
+        return reservaser.obtenerReservas(nombre, courtId, date);
     }
 
-    public boolean esAdmin(Authentication authentication) {
-        return authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-    }
+
 }
