@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -32,13 +30,9 @@ public class ReservaController {
     //respuesta: 201, 400, 401, 404, 409
     @PostMapping("/pistaPadel/reservations")
     @ResponseStatus(HttpStatus.CREATED)
-    public Reserva crear(@Valid @RequestBody ReservaCreateRequest req, BindingResult br, @RequestHeader("Authorization") String username) {
+    public Reserva crear(@Valid @RequestBody ReservaCreateRequest req, @RequestHeader("Authorization") String username) {
         log.info("Solicitud de creación de reserva recibida");
-        /*if (br.hasErrors()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Campos inválidos");
-        }
 
-         */
         User user = userService.autentica(username);
         log.info("HOLA");
         Reserva nuevaReserva = reservaser.crearReserva(req, user);
@@ -69,7 +63,7 @@ public class ReservaController {
         User user = userService.autentica(username);
 
         log.debug("Solicitud para obtener reserva con ID {}", reservaId);
-        Reserva r = reservaser.buscarReserva(reservaId);
+        Reserva r = reservaser.buscarReserva(reservaId, user);
 
         log.info("Reserva {} encontrada correctamente", reservaId);
         return r;
@@ -85,8 +79,7 @@ public class ReservaController {
 
         log.info("Solicitud de cancelación para reserva {}", reservaId);
 
-
-        reservaser.cancelarReserva(reservaId);
+        reservaser.cancelarReserva(reservaId, user);
 
         log.info("Reserva {} cancelada correctamente", reservaId);
     }
@@ -107,7 +100,7 @@ public class ReservaController {
             log.warn("Modificación rechazada: body vacío. Reserva {}", reservaId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se han introducido cambios");
         }
-        Reserva actualizada = reservaser.modificarReserva(reservaId, req);
+        Reserva actualizada = reservaser.modificarReserva(reservaId, req, user);
 
         log.info("Reserva modificada correctamente");
         return actualizada;
