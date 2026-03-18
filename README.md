@@ -102,7 +102,7 @@ Esta tabla permite controlar la disponibilidad de las pistas y evitar solapamien
 
 - Las reservas tienen distintos estados (`CONFIRMADA`, `CANCELADA`, `PASADA`).  Cuando una reserva confirmada ya ha finalizado y es consultada por la API, su estado se actualiza a `PASADA` y este cambio se persiste en la base de datos. Las reservas en estado `PASADA` no pueden modificarse ni cancelarse.
 
-### Arquitectura
+## Arquitectura
 - [src/main/java/edu/comillas/icai/git/pat/spring/ReservaPadel_PAT_G1/](./src/main/java/edu/comillas/icai/git/pat/spring/ReservaPadel_PAT_G1) – Código fuente de la aplicación Spring Boot.
     - configuration → Clases de configuración de la aplicación.
     - controllers → Controladores REST que definen todos los endpoints del sistema (auth, users, courts, reservations, availability, admin).
