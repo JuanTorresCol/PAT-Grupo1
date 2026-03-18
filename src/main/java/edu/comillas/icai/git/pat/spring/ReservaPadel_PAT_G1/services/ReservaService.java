@@ -90,8 +90,10 @@ public class ReservaService {
         return resultado;
     }
 
-    public Reserva buscarReserva(Long reservaId) {
+     public Reserva buscarReserva(Long reservaId, User user) {
         Reserva r = obtenerReserva(reservaId);
+        boolean esAdmin = user.getRol() == Rol.ADMIN;
+        comprobarDuenoOAdmin(r.getUsername().getEmail(), user.getEmail(), esAdmin);
 
         if (r.getEstado() == ReservaStatus.CONFIRMADA && reservaPasada(r)) {
             r.setEstado(ReservaStatus.PASADA);
@@ -103,8 +105,10 @@ public class ReservaService {
     }
 
 
-    public void cancelarReserva(Long reservaId) {
+    public void cancelarReserva(Long reservaId, User user) {
         Reserva r = obtenerReserva(reservaId);
+        boolean esAdmin = user.getRol() == Rol.ADMIN;
+        comprobarDuenoOAdmin(r.getUsername().getEmail(), user.getEmail(), esAdmin);
 
         if (r.getEstado() == ReservaStatus.CANCELADA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La reserva ya ha sido cancelada");
@@ -128,9 +132,11 @@ public class ReservaService {
         reporeserva.save(r);
     }
 
-    public Reserva modificarReserva(Long reservaId, ReservaPatchRequest req) {
+   public Reserva modificarReserva(Long reservaId, ReservaPatchRequest req, User user) {
         Reserva actual = obtenerReserva(reservaId);
-
+        Reserva r = obtenerReserva(reservaId);
+        boolean esAdmin = user.getRol() == Rol.ADMIN;
+        comprobarDuenoOAdmin(r.getUsername().getEmail(), user.getEmail(), esAdmin);
 
         if (actual.getEstado() == ReservaStatus.CANCELADA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede modificar una reserva cancelada");
