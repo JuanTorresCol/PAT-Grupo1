@@ -1,13 +1,17 @@
 package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services;
 
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Reserva;
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.User;
-import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.UserPatchRequest;
+import com.fasterxml.classmate.AnnotationOverrides;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.*;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +21,9 @@ public class UserService {
 
     private final UserRepository userRepository;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
+    AnnotationOverrides Jwts;
+
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -42,7 +49,7 @@ public class UserService {
     }
 
     //crear usuario
-    public User createUser(User user) {
+    public User registrar(UserCreateRequest user) {
 
         logger.info("Intentando crear usuario con email: {}", user.getEmail());
 
@@ -52,8 +59,30 @@ public class UserService {
             //siempre que se de logger.error hay que hacer exception
 
         }
-        else{
-        return userRepository.save(user); }
+
+        User usuarioNuevo = new User();
+        usuarioNuevo.setNombre(user.getNombre());
+        usuarioNuevo.setApellidos(user.getApellidos());
+        usuarioNuevo.setEmail(user.getEmail());
+        usuarioNuevo.setPassword(user.getPassword());
+        usuarioNuevo.setTelefono(user.getTelefono());
+        usuarioNuevo.setActivo(true);
+        usuarioNuevo.setRol(Rol.USER);
+        usuarioNuevo.setFechaRegistro(LocalDate.from(Instant.now()));
+        return userRepository.save(usuarioNuevo);
+    }
+
+
+    public User autentica(String token){
+
+        if (token == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        User user = userRepository.findByEmail(token);
+        return user;
+
+
     }
 
     //actualizar usuario
@@ -90,4 +119,37 @@ public class UserService {
 
         logger.info("Usuario eliminado con ID: {}", id);
     }
+
+
+    public String login (String username, String password) {
+        User user = userRepository.findByEmail(username);
+        if (user == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        //verifico password
+        if (user.getPassword() != password) {
+            throw new RuntimeException("Password incorrecta");
+        }
+
+        /*//genero token
+        String info = user.getEmail() + "|" + user.getRol();
+        String token = java.util.Base64.getEncoder().encodeToString(info.getBytes());
+
+        return new LoginResponse(token, user.getIdUsuario(), user.getNombre(), user.getRol());
+
+         */
+
+        String token =  user.getEmail();
+
+        return token;
+    }
+
+
+    public void logout(String token){
+        token = null;
+    }
+
+
+
 }

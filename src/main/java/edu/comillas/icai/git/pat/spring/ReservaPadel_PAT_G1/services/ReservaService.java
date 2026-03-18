@@ -48,8 +48,7 @@ public class ReservaService {
 
         SlotInfo s = validarYCalcularSlots(req.date(), req.startTime(), req.durationMins());
 
-        User usuario = repouser.findByEmail(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
 
 
         LocalTime startTime = APERTURA.plusMinutes((long) s.slotStart() * 30);
@@ -58,7 +57,7 @@ public class ReservaService {
         comprobarSolapeBD(req.getCourtId(), s.date(), startTime, endTime, null);
 
         Reserva nuevaReserva = new Reserva();
-        nuevaReserva.setUsername(usuario);
+        //nuevaReserva.setUsername(usuario);
         nuevaReserva.setPista(pista);
         nuevaReserva.setDate(s.date());
         nuevaReserva.setStartTime(startTime);
