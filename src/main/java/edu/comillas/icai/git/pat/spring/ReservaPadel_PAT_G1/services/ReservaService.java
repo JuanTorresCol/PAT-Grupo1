@@ -267,7 +267,7 @@ public class ReservaService {
 
     public void comprobarDuenoOAdmin(String usuario_dueno, String usuario_act, boolean esAdmin) {
         if (!esAdmin && !usuario_dueno.equals(usuario_act)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No tienes permiso");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso");
         }
     }
 
