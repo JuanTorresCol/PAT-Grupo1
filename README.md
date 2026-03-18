@@ -79,7 +79,7 @@ Contiene las reservas realizadas por los usuarios.
 Campos principales:
 
 - `ID_RESERVA` – identificador de la reserva
-- `USERNAME` / `USUARIO` – usuario que realiza la reserva
+- `USERNAME` – usuario que realiza la reserva
 - `PISTA` – pista reservada
 - `DATE` – fecha de la reserva
 - `START_TIME` – hora de inicio
