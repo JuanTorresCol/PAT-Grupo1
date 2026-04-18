@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.*;
@@ -30,10 +29,10 @@ public class ReservaController {
     //respuesta: 201, 400, 401, 404, 409
     @PostMapping("/pistaPadel/reservations")
     @ResponseStatus(HttpStatus.CREATED)
-    public Reserva crear(@Valid @RequestBody ReservaCreateRequest req, @RequestHeader("Authorization") String username) {
+    public Reserva crear(@Valid @RequestBody ReservaCreateRequest req, @RequestHeader("Authorization") String authHeader) {
         log.info("Solicitud de creación de reserva recibida");
 
-        User user = userService.autentica(username);
+        User user = userService.getUserFromHeader(authHeader);
         log.info("HOLA");
         Reserva nuevaReserva = reservaser.crearReserva(req, user);
         log.info("Reserva creada correctamente.");
@@ -43,9 +42,9 @@ public class ReservaController {
     //get todas las reservas de una persona
     // 200, 401
     @GetMapping("/pistaPadel/reservations")
-    public List<Reserva> listar( @RequestHeader("Authorization") String username) {
+    public List<Reserva> listar( @RequestHeader("Authorization") String authHeader) {
 
-        User user = userService.autentica(username);
+        User user = userService.getUserFromHeader(authHeader);
 
         log.debug("Solicitud para listar todas las reservas");
         List<Reserva> resultado = reservaser.listarReservasUsuario(user);
@@ -58,9 +57,9 @@ public class ReservaController {
     //get reservas por id de reserva
     // 200, 401, 403, 404
     @GetMapping("/pistaPadel/reservations/{reservaId}")
-    public Reserva buscar(@PathVariable Long reservaId, @RequestHeader("Authorization") String username) {
+    public Reserva buscar(@PathVariable Long reservaId, @RequestHeader("Authorization") String authHeader) {
 
-        User user = userService.autentica(username);
+        User user = userService.getUserFromHeader(authHeader);
 
         log.debug("Solicitud para obtener reserva con ID {}", reservaId);
         Reserva r = reservaser.buscarReserva(reservaId, user);
@@ -73,9 +72,9 @@ public class ReservaController {
     //204, 401, 403, 404, 409
     @DeleteMapping("/pistaPadel/reservations/{reservaId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long reservaId, @RequestHeader("Authorization") String username) {
+    public void eliminar(@PathVariable Long reservaId, @RequestHeader("Authorization") String authHeader) {
 
-        User user = userService.autentica(username);
+        User user = userService.getUserFromHeader(authHeader);
 
         log.info("Solicitud de cancelación para reserva {}", reservaId);
 
@@ -88,9 +87,9 @@ public class ReservaController {
     //200, 400, 401, 403, 404, 409
     @PatchMapping("/pistaPadel/reservations/{reservaId}")
     public Reserva cambiar(@PathVariable Long reservaId,
-                           @RequestBody ReservaPatchRequest req,@RequestHeader("Authorization") String username) {
+                           @RequestBody ReservaPatchRequest req,@RequestHeader("Authorization") String authHeader) {
 
-        User user = userService.autentica(username);
+        User user = userService.getUserFromHeader(authHeader);
 
         log.info("Solicitud de modificación de reserva {}", reservaId);
 
@@ -111,8 +110,8 @@ public class ReservaController {
     public List<Reserva> obtenerReservas(@RequestParam(required = false) String nombre,
                                          @RequestParam(required = false) String courtId,
                                          @RequestParam(required = false) LocalDate date,
-                                         @RequestHeader("Authorization") String username) {
-        User user = userService.autentica(username);
+                                         @RequestHeader("Authorization") String authHeader) {
+        User user = userService.getUserFromHeader(authHeader);
         userService.esAdmin(user);
 
         log.info("hola estoy en el endpoint");

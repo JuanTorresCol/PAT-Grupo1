@@ -36,13 +36,15 @@ public class AuthController {
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@RequestHeader("Authorization") String token) {
-        userService.logout(token);
+    public void logout(@RequestHeader("Authorization") String authHeader) {
+        User user = userService.getUserFromHeader(authHeader);
+        userService.logout(authHeader);
     }
 
     @GetMapping("/me")
-    public User getMe(@RequestHeader("Authorization") String token){
-        return userService.autentica(token);
+    public User getMe(@RequestHeader("Authorization") String authHeader){
+        User user = userService.getUserFromHeader(authHeader);
+        return userService.autentica(authHeader);
     }
 
 

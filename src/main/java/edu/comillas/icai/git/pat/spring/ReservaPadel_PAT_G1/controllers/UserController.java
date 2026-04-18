@@ -24,8 +24,8 @@ public class UserController {
     //GET /pistaPadel/users
 
     @GetMapping
-    public List<User> getAllUsers(@RequestHeader("Authorization") String token) {
-        User user = userService.autentica(token);
+    public List<User> getAllUsers(@RequestHeader("Authorization") String authHeader) {
+        User user = userService.getUserFromHeader(authHeader);
         userService.esAdmin(user);
         return userService.getAllUsers();
     }
@@ -33,8 +33,8 @@ public class UserController {
     // GET /pistaPadel/users/{userId}
 
     @GetMapping("/{userId}")
-    public User getUserById(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
-        User user = userService.autentica(token);
+    public User getUserById(@PathVariable Long userId, @RequestHeader("Authorization") String authHeader) {
+        User user = userService.getUserFromHeader(authHeader);
         userService.esAdmin(user);
 
         try {
@@ -48,9 +48,9 @@ public class UserController {
 
     @PatchMapping("/{userId}")
     public User updateUser(@PathVariable Long userId,
-                           @RequestBody UserPatchRequest req, @RequestHeader("Authorization") String token) {
+                           @RequestBody UserPatchRequest req, @RequestHeader("Authorization") String authHeader) {
 
-        User user = userService.autentica(token);
+        User user = userService.getUserFromHeader(authHeader);
         userService.esAdmin(user);
 
         try {
@@ -65,9 +65,9 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long userId, @RequestHeader("Authorization") String token) {
+    public void deleteUser(@PathVariable Long userId, @RequestHeader("Authorization") String authHeader) {
 
-        User user = userService.autentica(token);
+        User user = userService.getUserFromHeader(authHeader);
         userService.esAdmin(user);
 
         try {
