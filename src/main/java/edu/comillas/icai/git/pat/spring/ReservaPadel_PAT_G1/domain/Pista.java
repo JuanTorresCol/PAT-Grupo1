@@ -2,12 +2,10 @@ package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
 @Data
-@NoArgsConstructor
 @Entity
 public class Pista {
     @Id
