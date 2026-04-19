@@ -31,7 +31,7 @@ public class PistaService {
     public Pista creaPista(Pista pista, BindingResult  bindingResult) {
         log.info("Solicitud creación pista id={}", pista.getIdPista());
 
-        if (pistaRepository.findByIdPista(pista.getIdPista())!=null) {
+        if (pistaRepository.findByIdPista(pista.getIdPista())!=null||pistaRepository.existsByNombre(pista.getNombre())==true) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe una pista con ese ID");
         }
 
