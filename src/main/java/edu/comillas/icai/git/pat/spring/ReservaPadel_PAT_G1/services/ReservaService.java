@@ -105,7 +105,7 @@ public class ReservaService {
     }
 
 
-    public void cancelarReserva(Long reservaId, User user) {
+    public Reserva cancelarReserva(Long reservaId, User user) {
         Reserva r = obtenerReserva(reservaId);
         boolean esAdmin = user.getRol() == Rol.ADMIN;
         comprobarDuenoOAdmin(r.getUsername().getEmail(), user.getEmail(), esAdmin);
@@ -129,7 +129,7 @@ public class ReservaService {
 
         r.setEstado(ReservaStatus.CANCELADA);
 
-        reporeserva.save(r);
+        return reporeserva.save(r);
     }
 
    public Reserva modificarReserva(Long reservaId, ReservaPatchRequest req, User user) {

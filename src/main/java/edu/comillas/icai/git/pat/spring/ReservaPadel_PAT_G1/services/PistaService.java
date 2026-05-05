@@ -4,7 +4,10 @@ package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers.ControladorPistas;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.CourtUpdate;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Pista;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.Reserva;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.ReservaStatus;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.PistaRepository;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.repositories.ReservaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,6 +28,9 @@ public class PistaService {
 
     @Autowired
     PistaRepository pistaRepository;
+
+    @Autowired
+    ReservaRepository reservaRepository;
 
     public final Map<Long, Map<LocalDate, ArrayList<Boolean>>> disponibilidades = new ConcurrentHashMap<>();
     private static final Logger log = LoggerFactory.getLogger(ControladorPistas.class);
@@ -121,26 +129,50 @@ public class PistaService {
             }
 
             Pista pistaSelec = pistaRepository.findByNombre(nombre);
-            respuesta.put(pistaSelec.getIdPista(), obtenerDisponibilidadDia(pistaSelec.getIdPista(), fecha));
-
+            respuesta.put(pistaSelec.getIdPista(), checkDispPista(date, nombre));
         } else {
             for (Pista pi : pistaRepository.selectAll()) {
-                respuesta.put(pi.getIdPista(), obtenerDisponibilidadDia(pi.getIdPista(), fecha));
+                respuesta.put(pi.getIdPista(), checkDispPista(date, pi.getNombre()));
             }
         }
 
         return respuesta;
     }
 
+    //sirve para decirle al frontend qué slots pintar como ocupados
     public ArrayList<Boolean> checkDispPista(String date, String nombre){
         if (!pistaRepository.existsByNombre(nombre)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existen pistas con ese ID");
         }
+
         LocalDate fecha = LocalDate.parse(date);
+
         if (fecha.isBefore(LocalDate.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No puedes buscar reservas de días pasados");
         }
-        return obtenerDisponibilidadDia(pistaRepository.findByNombre(nombre).getIdPista(), fecha);
+
+        Pista pista = pistaRepository.findByNombre(nombre);
+
+        ArrayList<Boolean> slots = new ArrayList<>(Collections.nCopies(28, false));
+
+        List<Reserva> reservas = reservaRepository.findByPistaIdPistaAndDate(pista.getIdPista(), fecha);
+
+        for (Reserva r : reservas) {
+            if (r.getEstado() == ReservaStatus.CANCELADA) {
+                continue;
+            }
+
+            int slotStart = (int) Duration.between(ReservaService.APERTURA, r.getStartTime()).toMinutes() / 30;
+            int slotEnd = (int) Duration.between(ReservaService.APERTURA, r.getEndTime()).toMinutes() / 30;
+
+            for (int i = slotStart; i < slotEnd; i++) {
+                if (i >= 0 && i < slots.size()) {
+                    slots.set(i, true);
+                }
+            }
+        }
+
+        return slots;
     }
 
     public ArrayList<Boolean> obtenerDisponibilidadDia(Long courtId, LocalDate fecha) {

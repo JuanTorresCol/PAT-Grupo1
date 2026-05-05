@@ -33,7 +33,6 @@ public class ReservaController {
         log.info("Solicitud de creación de reserva recibida");
 
         User user = userService.getUserFromHeader(authHeader);
-        log.info("HOLA");
         Reserva nuevaReserva = reservaser.crearReserva(req, user);
         log.info("Reserva creada correctamente.");
         return nuevaReserva;
@@ -71,16 +70,17 @@ public class ReservaController {
     //eliminar alguna reserva por id de reserva
     //204, 401, 403, 404, 409
     @DeleteMapping("/pistaPadel/reservations/{reservaId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long reservaId, @RequestHeader("Authorization") String authHeader) {
+    public Reserva eliminar(@PathVariable Long reservaId, @RequestHeader("Authorization") String authHeader) {
 
         User user = userService.getUserFromHeader(authHeader);
 
         log.info("Solicitud de cancelación para reserva {}", reservaId);
 
-        reservaser.cancelarReserva(reservaId, user);
+        Reserva reservaCancelada = reservaser.cancelarReserva(reservaId, user);
 
         log.info("Reserva {} cancelada correctamente", reservaId);
+
+        return reservaCancelada;
     }
 
     //cambiar alguna reserva por id de reserva
