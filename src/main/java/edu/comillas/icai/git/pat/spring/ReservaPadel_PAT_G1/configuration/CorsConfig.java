@@ -16,6 +16,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
+                        //indica desde que frontends se puede llamar al backend
                         .allowedOriginPatterns(
                                 "http://127.0.0.1:*",
                                 "http://localhost:*",

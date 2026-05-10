@@ -18,7 +18,7 @@ public class ConfiguracionSeguridad {
     public SecurityFilterChain configuracion(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> {})
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) //al usar bearer token no necesitamos csrf
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 )

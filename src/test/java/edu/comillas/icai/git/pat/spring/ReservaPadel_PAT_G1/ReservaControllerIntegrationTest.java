@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -57,6 +58,8 @@ public class ReservaControllerIntegrationTest {
         mockMvc.perform(get("/pistaPadel/reservations")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
+        //si quisiera comprobar por ejemplo que el array que devuelve coincide la long
+//                .andExpect(jsonPath("$.length()").value(2));
     }
 
     @Test

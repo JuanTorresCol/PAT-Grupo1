@@ -3,6 +3,7 @@ package edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.controllers;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.LoginRequest;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.User;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.UserCreateRequest;
+import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.domain.UserPatchRequest;
 import edu.comillas.icai.git.pat.spring.ReservaPadel_PAT_G1.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,14 +17,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/pistaPadel/auth")
-public class AuthController {
+public class
+
+AuthController {
 
     @Autowired
     UserService userService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public User register(@Valid @RequestBody UserCreateRequest nuevoUser) {
+    //cambiado: devuelve token
+    public String register(@Valid @RequestBody UserCreateRequest nuevoUser) {
 
         return userService.registrar(nuevoUser);
     }
@@ -31,7 +35,7 @@ public class AuthController {
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest loginRequest) {
 
-        return userService.login(loginRequest.getEmail(),loginRequest.getPassword());
+        return userService.login(loginRequest.getEmail(), loginRequest.getPassword());
     }
 
     @PostMapping("/logout")
@@ -42,13 +46,24 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public User getMe(@RequestHeader("Authorization") String authHeader){
+    public User getMe(@RequestHeader("Authorization") String authHeader) {
         User user = userService.getUserFromHeader(authHeader);
         return userService.autentica(authHeader);
     }
 
-
-
-
-
+    //propio usuario cambia su info
+    @PatchMapping("/me")
+    public User updateMe(@RequestBody UserPatchRequest req,
+                         @RequestHeader("Authorization") String authHeader) {
+        User user = userService.getUserFromHeader(authHeader);
+        try {
+            return userService.updateUser(user.getIdUsuario(), req);
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        }
+    }
 }
+
+
+
+

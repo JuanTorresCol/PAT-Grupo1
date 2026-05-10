@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.*;
@@ -119,5 +120,12 @@ public class ReservaController {
         return reservaser.obtenerReservas(nombre, courtId, date);
     }
 
+    //añadido: ejemplo de tarea programada para que se
+    // actualicen cada 1 min las reservas pasadas
+    //actualmente se hace al llamar al metodo reservas
+//    @Scheduled(fixedRate = 60000)
+//    public void actualizarReservasPasadas() {
+//        reservaser.reservaPasada();
+//    }
 
 }

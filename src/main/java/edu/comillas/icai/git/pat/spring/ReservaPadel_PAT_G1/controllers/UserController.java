@@ -45,7 +45,7 @@ public class UserController {
     }
 
     //PATCH /pistaPadel/users/{userId}
-
+    //cambiar user para el admin
     @PatchMapping("/{userId}")
     public User updateUser(@PathVariable Long userId,
                            @RequestBody UserPatchRequest req, @RequestHeader("Authorization") String authHeader) {

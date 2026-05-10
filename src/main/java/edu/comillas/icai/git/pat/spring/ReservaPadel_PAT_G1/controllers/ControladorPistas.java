@@ -51,7 +51,6 @@ public class ControladorPistas {
     }
 
     @PatchMapping("/pistaPadel/courts/{nombre}")
-
     public Pista actualizar(@PathVariable String nombre,
                             @RequestBody CourtUpdate newCourt, @RequestHeader("Authorization") String authHeader) {
 
