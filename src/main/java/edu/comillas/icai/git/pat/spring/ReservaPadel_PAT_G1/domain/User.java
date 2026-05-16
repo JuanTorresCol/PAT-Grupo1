@@ -57,4 +57,7 @@ public class User {
     private boolean activo;
 
 
+    public boolean getActivo() {
+        return activo;
+    }
 }

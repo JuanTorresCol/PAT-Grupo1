@@ -27,7 +27,7 @@ AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     //cambiado: devuelve token
-    public String register(@Valid @RequestBody UserCreateRequest nuevoUser) {
+    public User register(@Valid @RequestBody UserCreateRequest nuevoUser) {
 
         return userService.registrar(nuevoUser);
     }

@@ -182,6 +182,7 @@ public class UserService {
         existingUser.setApellidos(updatedUser.apellidos());
         existingUser.setEmail(updatedUser.email());
         existingUser.setTelefono(updatedUser.telefono());
+        existingUser.setActivo(updatedUser.active());
 
         logger.info("Usuario actualizado con ID: {}", id);
 
@@ -217,4 +218,7 @@ public class UserService {
     public void logout(String token){
         blacklist.add(token);
     }
+
+
+
 }

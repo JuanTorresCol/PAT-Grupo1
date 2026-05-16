@@ -34,9 +34,16 @@ public class ReservaController {
         log.info("Solicitud de creación de reserva recibida");
 
         User user = userService.getUserFromHeader(authHeader);
-        Reserva nuevaReserva = reservaser.crearReserva(req, user);
-        log.info("Reserva creada correctamente.");
-        return nuevaReserva;
+        if (user.getActivo()){
+            Reserva nuevaReserva = reservaser.crearReserva(req, user);
+            log.info("Reserva creada correctamente.");
+            return nuevaReserva;
+        }else{
+            log.info("El usuario está inactivo por lo que no puede hacer reservas");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+
+        }
+
     }
 
     //get todas las reservas de una persona
